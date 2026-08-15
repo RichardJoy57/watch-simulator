@@ -1,0 +1,338 @@
+/*
+  Design direction: clinical telemetry paper.
+
+  Fitness dashboards default to black backgrounds and neon accents. This one
+  borrows instead from the instrument it imitates — ECG graph paper, a red
+  stylus trace, monospaced instrument type. The grid is a real background
+  layer, not decoration: it is the page's one signature element.
+*/
+
+:root {
+  --paper: #f6f3ee;
+  --paper-raised: #fffdf9;
+  --grid: #e6d9d2;
+  --grid-strong: #d6c4bb;
+  --ink: #1b1815;
+  --ink-soft: #6d635c;
+  --pulse: #b8332b;
+  --burn: #9a5b18;
+  --stride: #2b5d6b;
+
+  --font-display: 'IBM Plex Sans Condensed', 'IBM Plex Sans', sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --gutter: clamp(1.25rem, 4vw, 3rem);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--paper);
+  /* 5 mm major squares over 1 mm minor: ECG paper. */
+  background-image:
+    linear-gradient(var(--grid-strong) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-strong) 1px, transparent 1px),
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:
+    50px 50px,
+    50px 50px,
+    10px 10px,
+    10px 10px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.page {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 5vw, 3.5rem) var(--gutter) 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ---------- Masthead ---------- */
+
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 1rem;
+}
+
+.masthead__title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 6vw, 3.1rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin: 0 0 0.4rem;
+  text-transform: uppercase;
+}
+
+.masthead__sub {
+  margin: 0;
+  max-width: 34rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.session {
+  margin: 0;
+}
+
+.session div {
+  text-align: right;
+}
+
+.session__clock {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.eyebrow--muted {
+  opacity: 0.6;
+}
+
+/* ---------- ECG ---------- */
+
+.ecg {
+  --trace-color: var(--pulse);
+  background: var(--paper-raised);
+  border: 1px solid var(--grid-strong);
+  padding: 0.75rem 1rem 0.25rem;
+}
+
+.ecg__label {
+  display: flex;
+  justify-content: space-between;
+}
+
+.ecg__canvas {
+  --trace-color: var(--pulse);
+  display: block;
+  width: 100%;
+  height: 150px;
+}
+
+/* ---------- Metrics ---------- */
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1rem;
+}
+
+.metric {
+  background: var(--paper-raised);
+  border: 1px solid var(--grid-strong);
+  border-top: 3px solid var(--metric-accent);
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.metric__label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.metric__value {
+  margin: 0.5rem 0 0.35rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.metric__number {
+  font-family: var(--font-display);
+  font-size: 2.7rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--metric-accent);
+}
+
+.metric__unit {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.metric__note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+/* ---------- Controls ---------- */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  background: var(--paper-raised);
+  border: 1px solid var(--grid-strong);
+  padding: 1rem 1.1rem;
+}
+
+.activity__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.activity__option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.45rem 0.8rem;
+  background: transparent;
+  border: 1px solid var(--grid-strong);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.activity__option:hover {
+  border-color: var(--ink-soft);
+}
+
+.activity__option[aria-pressed='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper-raised);
+}
+
+.activity__met {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.controls__buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper-raised);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.button--quiet {
+  background: transparent;
+  color: var(--ink);
+}
+
+.button:hover {
+  opacity: 0.85;
+}
+
+:where(button):focus-visible {
+  outline: 2px solid var(--pulse);
+  outline-offset: 2px;
+}
+
+/* ---------- Trend ---------- */
+
+.trend {
+  background: var(--paper-raised);
+  border: 1px solid var(--grid-strong);
+  padding: 0.9rem 1rem 0.5rem;
+}
+
+.trend--empty {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  padding: 1.5rem 1rem;
+}
+
+.trend--empty p {
+  margin: 0;
+}
+
+.trend__head {
+  margin-bottom: 0.5rem;
+}
+
+/* ---------- Footer ---------- */
+
+.footer {
+  border-top: 1px solid var(--grid-strong);
+  padding-top: 1rem;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  max-width: 44rem;
+}
+
+.footer p {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
