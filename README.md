@@ -5,7 +5,7 @@ energy expenditure and step cadence are produced by a physiological model rather
 replayed from a recording, so the dashboard responds when you change activity — heart
 rate climbs toward a new target over several seconds instead of jumping to it.
 
-**[Live demo](https://YOUR-DEPLOYMENT.vercel.app)** · Built with React, Vite and Recharts.
+https://watch-simulator.vercel.app/ · Built with React, Vite and Recharts.
 
 ![Dashboard screenshot](docs/screenshot.png)
 
