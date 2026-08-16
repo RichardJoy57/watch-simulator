@@ -1,6 +1,6 @@
 import ActivityControl from './components/ActivityControl';
 import EcgTrace from './components/EcgTrace';
-import MetricCard from './components/MetricCard.jsx';
+import MetricCard from './components/MetricCard';
 import TrendChart from './components/TrendChart';
 import { useSimulation } from './hooks/useSimulation';
 import { ACTIVITIES, formatDuration } from './lib/simulator';
