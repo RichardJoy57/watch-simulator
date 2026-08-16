@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createSession, setActivity, step } from '../lib/simulator.js';
+import { createSession, setActivity, step } from '../lib/simulator';
 
 /**
  * Runs the simulation and hands the UI two things at two different speeds.

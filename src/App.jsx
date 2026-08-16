@@ -1,9 +1,9 @@
-import ActivityControl from './components/ActivityControl.jsx';
-import EcgTrace from './components/EcgTrace.jsx';
+import ActivityControl from './components/ActivityControl';
+import EcgTrace from './components/EcgTrace';
 import MetricCard from './components/MetricCard.jsx';
 import TrendChart from './components/TrendChart.jsx';
-import { useSimulation } from './hooks/useSimulation.js';
-import { ACTIVITIES, formatDuration } from './lib/simulator.js';
+import { useSimulation } from './hooks/useSimulation';
+import { ACTIVITIES, formatDuration } from './lib/simulator';
 
 export default function App() {
   const { snapshot, trend, running, sessionRef, changeActivity, reset, toggleRunning } =

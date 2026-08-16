@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { ecgSample } from '../lib/simulator.js';
+import { ecgSample } from '../lib/simulator';
 
 /**
  * The scrolling ECG trace.

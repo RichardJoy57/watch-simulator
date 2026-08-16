@@ -6,26 +6,63 @@
  * When the wearer changes activity the heart rate does not jump — it
  * approaches the new target exponentially, the way a real one does, and it
  * carries a small respiratory oscillation on top.
- *
- * Keeping this in a plain module (no React) means the model can be unit
- * tested on its own and the UI never has to know how a heart works.
  */
 
+/** One activity's physiological constants. */
+export type ActivityConfig = {
+  label: string;
+  met: number;
+  cadence: number;
+  targetHr: number;
+  lag: number;
+};
+
+// `as const` tells TypeScript to remember the exact keys and values here,
+// rather than widening them to "some object with string keys". That is what
+// makes ActivityKey below resolve to the four literal names.
 export const ACTIVITIES = {
   rest: { label: 'Resting', met: 1.0, cadence: 0, targetHr: 62, lag: 0.045 },
   walk: { label: 'Walking', met: 3.5, cadence: 108, targetHr: 96, lag: 0.055 },
   jog: { label: 'Jogging', met: 7.0, cadence: 156, targetHr: 142, lag: 0.07 },
   run: { label: 'Running', met: 11.0, cadence: 178, targetHr: 170, lag: 0.085 },
+} as const satisfies Record<string, ActivityConfig>;
+
+/** 'rest' | 'walk' | 'jog' | 'run' — derived, so it can never drift out of sync. */
+export type ActivityKey = keyof typeof ACTIVITIES;
+
+export type Profile = {
+  weightKg: number;
+  restingHr: number;
+  maxHr: number;
 };
 
-export const DEFAULT_PROFILE = {
+export type Session = {
+  profile: Profile;
+  activity: ActivityKey;
+  elapsedMs: number;
+  heartRate: number;
+  calories: number;
+  steps: number;
+  stepRemainder: number;
+  phase: number;
+};
+
+/** One second of recorded history, as fed to the trend chart. */
+export type TrendPoint = {
+  t: number;
+  heartRate: number;
+  calories: number;
+  steps: number;
+};
+
+export const DEFAULT_PROFILE: Profile = {
   weightKg: 72,
   restingHr: 62,
   maxHr: 190,
 };
 
 /** A fresh session. Everything the simulation needs lives in here. */
-export function createSession(profile = DEFAULT_PROFILE) {
+export function createSession(profile: Profile = DEFAULT_PROFILE): Session {
   return {
     profile,
     activity: 'rest',
@@ -41,22 +78,18 @@ export function createSession(profile = DEFAULT_PROFILE) {
 /**
  * Advance the session by `dtMs` milliseconds and return the next state.
  *
- * Pure: same input, same output, no mutation. That makes it safe to call
- * from a React effect without worrying about stale closures corrupting
- * anything, and it makes the model trivial to test.
+ * Pure: same input, same output, no mutation.
  */
-export function step(session, dtMs) {
+export function step(session: Session, dtMs: number): Session {
   const dtSec = dtMs / 1000;
   const activity = ACTIVITIES[session.activity];
   const { weightKg } = session.profile;
 
   // Heart rate eases toward the target rather than snapping to it.
-  // `lag` is the fraction of the remaining gap closed per second.
   const gap = activity.targetHr - session.heartRate;
   const eased = session.heartRate + gap * activity.lag * dtSec * 12;
 
-  // Respiratory sinus arrhythmia: heart rate rises and falls slightly with
-  // the breath. Roughly a 4-second cycle, wider when at rest.
+  // Respiratory sinus arrhythmia: heart rate rises and falls with the breath.
   const phase = (session.phase + dtSec / 4) % 1;
   const breathAmplitude = session.activity === 'rest' ? 2.4 : 1.1;
   const breath = Math.sin(phase * Math.PI * 2) * breathAmplitude;
@@ -64,12 +97,10 @@ export function step(session, dtMs) {
   const heartRate = clamp(eased + breath + jitter(0.4), 40, session.profile.maxHr);
 
   // Calories: the standard MET equation, per second.
-  // kcal/min = MET x 3.5 x kg / 200
   const kcalPerSec = (activity.met * 3.5 * weightKg) / 200 / 60;
   const calories = session.calories + kcalPerSec * dtSec;
 
-  // Steps accumulate fractionally and only tick over as whole steps, so the
-  // counter never shows a fraction of a footfall.
+  // Steps accumulate fractionally and only tick over as whole steps.
   const rawSteps = session.stepRemainder + (activity.cadence / 60) * dtSec;
   const wholeSteps = Math.floor(rawSteps);
 
@@ -84,19 +115,17 @@ export function step(session, dtMs) {
   };
 }
 
-export function setActivity(session, activity) {
-  if (!ACTIVITIES[activity]) return session;
+export function setActivity(session: Session, activity: ActivityKey): Session {
   return { ...session, activity };
 }
 
 /**
  * One cycle of a synthetic ECG, sampled at `t` in [0, 1).
  *
- * Sum of Gaussians standing in for the P wave, QRS complex and T wave. It is
- * a caricature of a real trace, not a diagnostic one — enough to read as a
- * heartbeat on screen, and deliberately not enough to mistake for clinical data.
+ * Sum of Gaussians standing in for the P wave, QRS complex and T wave. A
+ * caricature of a real trace, not a diagnostic one.
  */
-export function ecgSample(t) {
+export function ecgSample(t: number): number {
   return (
     gaussian(t, 0.18, 0.022) * 0.14 + // P
     gaussian(t, 0.28, 0.008) * -0.16 + // Q
@@ -106,19 +135,19 @@ export function ecgSample(t) {
   );
 }
 
-function gaussian(x, mu, sigma) {
+function gaussian(x: number, mu: number, sigma: number): number {
   return Math.exp(-((x - mu) ** 2) / (2 * sigma ** 2));
 }
 
-function jitter(scale) {
+function jitter(scale: number): number {
   return (Math.random() - 0.5) * 2 * scale;
 }
 
-function clamp(value, min, max) {
+function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-export function formatDuration(ms) {
+export function formatDuration(ms: number): string {
   const total = Math.floor(ms / 1000);
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);

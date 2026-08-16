@@ -1,4 +1,4 @@
-import { ACTIVITIES } from '../lib/simulator.js';
+import { ACTIVITIES } from '../lib/simulator';
 
 export default function ActivityControl({ current, onChange }) {
   return (
