@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createSession, setActivity, step } from '../lib/simulator';
+import {
+  createSession,
+  setActivity,
+  step,
+  type ActivityKey,
+  type TrendPoint,
+} from '../lib/simulator';
+
 
 /**
  * Runs the simulation and hands the UI two things at two different speeds.
@@ -20,7 +27,7 @@ const TREND_SECONDS = 90;
 export function useSimulation() {
   const sessionRef = useRef(createSession());
   const [snapshot, setSnapshot] = useState(sessionRef.current);
-  const [trend, setTrend] = useState([]);
+  const [trend, setTrend] = useState<TrendPoint[]>([]);
   const [running, setRunning] = useState(true);
 
   const runningRef = useRef(running);
@@ -63,7 +70,7 @@ export function useSimulation() {
     return () => clearInterval(id);
   }, []);
 
-  const changeActivity = useCallback((activity) => {
+  const changeActivity = useCallback((activity: ActivityKey) => {
     sessionRef.current = setActivity(sessionRef.current, activity);
     setSnapshot(sessionRef.current);
   }, []);
