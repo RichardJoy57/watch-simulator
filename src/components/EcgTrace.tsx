@@ -1,28 +1,46 @@
-import { useEffect, useRef } from 'react';
-import { ecgSample } from '../lib/simulator';
+import { useEffect, useRef, type MutableRefObject } from 'react';
+import { ecgSample, type Session } from '../lib/simulator';
+
+type TracePoint = { x: number; v: number };
+
+type TraceState = {
+  x: number;
+  beatPhase: number;
+  last: number;
+  points: TracePoint[];
+};
+
+type EcgTraceProps = {
+  sessionRef: MutableRefObject<Session>;
+  running: boolean;
+};
 
 /**
  * The scrolling ECG trace.
  *
- * This component never re-renders after mount. It reads the live session
- * out of a ref inside requestAnimationFrame and paints to a canvas, which
- * keeps a 60 fps waveform completely outside React's render cycle — the
- * metric cards next to it update four times a second and are unaffected.
+ * This component never re-renders after mount. It reads the live session out
+ * of a ref inside requestAnimationFrame and paints to a canvas, which keeps a
+ * 60 fps waveform completely outside React's render cycle.
  */
-export default function EcgTrace({ sessionRef, running }) {
-  const canvasRef = useRef(null);
-  const stateRef = useRef({ x: 0, beatPhase: 0, last: 0, points: [] });
+export default function EcgTrace({ sessionRef, running }: EcgTraceProps) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const stateRef = useRef<TraceState>({ x: 0, beatPhase: 0, last: 0, points: [] });
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
-    let frame;
+    if (!ctx) return;
+
+    let frame: number;
 
     const prefersReducedMotion = window.matchMedia(
       '(prefers-reduced-motion: reduce)'
     ).matches;
 
     function resize() {
+      if (!canvas || !ctx) return;
       const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
       canvas.width = rect.width * dpr;
@@ -33,7 +51,9 @@ export default function EcgTrace({ sessionRef, running }) {
     resize();
     window.addEventListener('resize', resize);
 
-    function draw(now) {
+    function draw(now: number) {
+      if (!canvas || !ctx) return;
+
       const rect = canvas.getBoundingClientRect();
       const w = rect.width;
       const h = rect.height;
@@ -47,8 +67,6 @@ export default function EcgTrace({ sessionRef, running }) {
         const beatDurationMs = 60000 / hr;
         s.beatPhase = (s.beatPhase + dt / beatDurationMs) % 1;
 
-        // Horizontal speed is fixed so the trace reads like paper feeding
-        // through a machine: faster heart, tighter complexes.
         const pxPerMs = 0.09;
         s.x += dt * pxPerMs;
 
@@ -75,7 +93,6 @@ export default function EcgTrace({ sessionRef, running }) {
       });
       ctx.stroke();
 
-      // Leading dot, so there is a clear "now" on the trace.
       const head = s.points[s.points.length - 1];
       if (head) {
         ctx.beginPath();
