@@ -1,3 +1,4 @@
+import { type TrendPoint } from '../lib/simulator';
 import {
   Area,
   AreaChart,
@@ -14,7 +15,10 @@ import {
  * The window is capped in the hook rather than here, so this component stays
  * a pure function of the data it is handed.
  */
-export default function TrendChart({ data }) {
+type TrendChartProps = {      
+  data: TrendPoint[];
+};
+export default function TrendChart({ data }: TrendChartProps) {
   if (data.length < 2) {
     return (
       <div className="trend trend--empty">

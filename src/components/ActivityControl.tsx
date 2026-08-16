@@ -1,11 +1,17 @@
-import { ACTIVITIES } from '../lib/simulator';
+import { ACTIVITIES,type ActivityKey } from '../lib/simulator';
 
-export default function ActivityControl({ current, onChange }) {
+type ActivityControlProps = {          
+  current: ActivityKey;
+  onChange: (activity: ActivityKey) => void;
+};
+
+export default function ActivityControl({ current, onChange }: ActivityControlProps) {
+  const entries = Object.entries(ACTIVITIES) as [ActivityKey, (typeof ACTIVITIES)[ActivityKey]][];
   return (
     <div className="activity">
       <span className="eyebrow">Activity</span>
       <div className="activity__options" role="group" aria-label="Select activity">
-        {Object.entries(ACTIVITIES).map(([key, config]) => (
+        {entries.map(([key, config]) => (
           <button
             key={key}
             type="button"
